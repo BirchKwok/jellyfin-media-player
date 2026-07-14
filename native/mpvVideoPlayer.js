@@ -153,9 +153,7 @@
                     this.setPlaybackRate(1);
                     this.setMute(false, false);
 
-                    if (this._currentPlayOptions.fullscreen) {
-                        this.appRouter.showVideoOsd().then(this.onNavigatedToOsd);
-                    } else {
+                    if (!this._currentPlayOptions.fullscreen) {
                         this.appRouter.setTransparency('backdrop');
                         this._videoDialog.dlg.style.zIndex = 'unset';
                     }
@@ -226,6 +224,16 @@
             this.loading.show();
             window.api.power.setScreensaverEnabled(false);
             const elem = await this.createMediaElement(options);
+
+            // Enter the playback surface before starting network and decoder
+            // work. This gives immediate navigation feedback and keeps the
+            // loading indicator on the video page until mpv emits `playing`.
+            if (options.fullscreen) {
+                this.appRouter.showVideoOsd().then(this.onNavigatedToOsd).catch(error => {
+                    console.warn('Unable to open the video page before loading', error);
+                });
+            }
+
             return await this.setCurrentSrc(elem, options);
         }
 
@@ -437,6 +445,8 @@
                 dlg.style.right = 0;
                 dlg.style.display = 'flex';
                 dlg.style.alignItems = 'center';
+                dlg.style.justifyContent = 'center';
+                dlg.style.background = '#000';
 
                 if (options.fullscreen) {
                     dlg.style.zIndex = 1000;

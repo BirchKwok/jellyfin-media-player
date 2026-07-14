@@ -165,6 +165,11 @@ const plugins = [
     'jmpInputPlugin'
 ];
 
+// Native extension files are tiny and can change independently of the bundled
+// web client. Use a per-launch URL so an old service-worker cache cannot keep
+// running a player implementation from a previous app version.
+const extensionCacheToken = Date.now().toString(36);
+
 function loadScript(src) {
     return new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -178,7 +183,7 @@ function loadScript(src) {
 // Add plugin loaders
 for (const plugin of plugins) {
     window[plugin] = async () => {
-        await loadScript(`${viewdata.scriptPath}${plugin}.js`);
+        await loadScript(`${viewdata.scriptPath}${plugin}.js?v=${extensionCacheToken}`);
         return window["_" + plugin];
     };
 }
